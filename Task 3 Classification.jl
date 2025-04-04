@@ -124,3 +124,46 @@ function assess_model(model, X_train, X_test, y_train, y_test)
     
     return m, acc, conf_matrix, report
 end
+# Hyperparameter tuning and model assessment - corrected version
+best_model, best_acc = nothing, 0.0
+model_results = []
+
+for model in my_models
+    model_name = nameof(typeof(model))
+    
+    if model_name == "RandomForestClassifier"
+        tuned = TunedModel(
+            model=model,
+            tuning=Grid(resolution=3),
+            resampling=CV(nfolds=5),
+            ranges=[
+                range(model, :n_trees, lower=50, upper=150),
+                range(model, :max_depth, lower=3, upper=10)
+            ]
+        )
+    elseif model_name == "XGBoostClassifier"
+        tuned = TunedModel(
+            model=model,
+            tuning=Grid(resolution=3),
+            resampling=CV(nfolds=5),
+            ranges=[
+                range(model, :max_depth, lower=3, upper=7),
+                range(model, :eta, lower=0.1, upper=0.3)
+            ]
+        )
+    else
+        tuned = model
+    end
+    
+    mach = machine(tuned, X_train, y_train)
+    fit!(mach)
+    class_predictions = predict_mode(mach, X_test)  # Use predict_mode for classifiers
+    acc = accuracy(class_predictions, y_test)
+    
+    push!(model_results, (name=model_name, accuracy=acc, model=mach))
+    
+    if acc > best_acc
+        best_acc, best_model = acc, mach
+    end
+end
+
