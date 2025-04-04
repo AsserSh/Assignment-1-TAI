@@ -50,3 +50,38 @@ df = CSV.read(data_path, DataFrame)
        
         plot(p1, p2, p3, p4, layout=(2, 2), size=(1000, 800))
     end
+# Data Preprocessing
+function prepare_data(df)
+    df.fetal_health = categorical(df.fetal_health)
+    y = df.fetal_health
+    X = select(df, Not(:fetal_health))
+    
+    normalizer = Standardizer()
+    model = machine(normalizer, X)
+    fit!(model)
+    X = MLJ.transform(model, X)
+    
+    return X, y
+end
+
+X, y = prepare_data(df)
+
+# Handling class imbalance
+function balance_classes(X, y)
+    class_counts = combine(groupby(DataFrame(y=y), :y), nrow => :count)
+    println("\nClass distribution before balancing:")
+    println(class_counts)
+    
+    X_matrix = Float32.(Matrix(X))
+    y_vector = Int.(y.refs)
+    
+    X_resampled, y_resampled = smote(X_matrix, y_vector; k=5, ratios=Dict(1=>1.0, 2=>1.0, 3=>1.0))
+    
+    X_final = DataFrame(X_resampled, names(X))
+    y_final = categorical(y_resampled)
+    
+    println("\nClass distribution after balancing:")
+    println(combine(groupby(DataFrame(y=y_final), :y), nrow => :count))
+    
+    return X_final, y_final
+end
