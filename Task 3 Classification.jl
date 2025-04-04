@@ -85,3 +85,42 @@ function balance_classes(X, y)
     
     return X_final, y_final
 end
+
+# Splitting data
+function train_test_split(X, y; test_size=0.2, seed=42)
+    Random.seed!(seed)
+    n = nrow(X)
+    test_indices = randperm(n)[1:round(Int, test_size * n)]
+    train_indices = setdiff(1:n, test_indices)
+    
+    return X[train_indices, :], X[test_indices, :], y[train_indices], y[test_indices]
+end
+
+X_train, X_test, y_train, y_test = train_test_split(X_balanced, y_balanced)
+
+
+# Model evaluation - corrected version
+function assess_model(model, X_train, X_test, y_train, y_test)
+    m = machine(model, X_train, y_train)
+    fit!(m)
+    
+    # Get both probabilistic predictions and class predictions
+    proba_predictions = predict(m, X_test)
+    class_predictions = predict_mode(m, X_test)
+    
+    acc = accuracy(class_predictions, y_test)
+    conf_matrix = confusion_matrix(class_predictions, y_test)
+    report = classification_report(class_predictions, y_test)
+    
+    println("\nModel: ", nameof(typeof(model)))
+    println("Accuracy: ", round(acc, digits=3))
+    println("\nConfusion Matrix:")
+    println(conf_matrix)
+    println("\nClassification Report:")
+    println(report)
+    
+    heatmap(levels(y_test), levels(y_test), MLJ.confmat(class_predictions, y_test).mat, 
+            xlabel="Predicted", ylabel="Actual", title="Confusion Matrix", color=:viridis)
+    
+    return m, acc, conf_matrix, report
+end
