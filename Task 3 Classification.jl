@@ -167,3 +167,24 @@ for model in my_models
     end
 end
 
+# Load models one by one
+RandomForestClassifier = @load RandomForestClassifier pkg=DecisionTree verbosity=1
+XGBoostClassifier = @load XGBoostClassifier verbosity=1
+LogisticClassifier = @load LogisticClassifier pkg=MLJLinearModels verbosity=1
+NeuralNetworkClassifier = @load NeuralNetworkClassifier pkg=MLJFlux verbosity=1
+
+my_models = [
+    RandomForestClassifier(),
+    XGBoostClassifier(),
+    LogisticClassifier(),
+    NeuralNetworkClassifier()
+]
+
+
+# Results summary
+println("\nModel Comparison:")
+for result in model_results
+    println("$(result.name): Accuracy = $(round(result.accuracy, digits=3))")
+end
+
+println("\nTop Model: $(nameof(typeof(best_model.model))) with accuracy $(round(best_acc, digits=3))")
