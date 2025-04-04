@@ -188,3 +188,39 @@ for result in model_results
 end
 
 println("\nTop Model: $(nameof(typeof(best_model.model))) with accuracy $(round(best_acc, digits=3))")
+# Feature importance
+if nameof(typeof(best_model.model)) in ["RandomForestClassifier", "XGBoostClassifier"]
+    println("\nFeature Importance:")
+    
+    # For RandomForest
+    if nameof(typeof(best_model.model)) == "RandomForestClassifier"
+        fi = feature_importances(best_model.model, X_train, y_train)
+        fi_df = DataFrame(Feature=names(X_train), Importance=fi.importance)
+    # For XGBoost
+    else
+        importance = xgboost_importance(best_model.model)
+        fi_df = DataFrame(Feature=names(X_train), Importance=importance)
+    end
+    
+    sort!(fi_df, :Importance, rev=true)
+    println(fi_df)
+    
+    bar(fi_df.Feature, fi_df.Importance, 
+        xlabel="Features", ylabel="Importance", 
+        title="Feature Importance", legend=false, 
+        xtickfont=font(8, :horizontal), size=(800, 400))
+end
+
+# Save best model
+model_path = "best_fetal_health_model.jlso"
+MLJ.save(model_path, best_model)
+println("\nBest model saved at $model_path")
+
+# Predict on sample data
+sample = X_test[1:1, :]
+predicted = predict_mode(best_model, sample)
+actual = y_test[1]
+println("\nSample prediction:")
+println("Predicted: ", predicted)
+println("Actual:    ", actual)
+println("Match:     ", predicted[1] == actual)
