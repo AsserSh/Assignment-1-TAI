@@ -41,3 +41,12 @@ df = CSV.read(data_path, DataFrame)
                     names(df[:, Not(:fetal_health)]), 
                     correlation_matrix, 
                     title="Feature Correlation", color=:viridis)
+        p3 = histogram(df[!,"baseline value"], 
+                      xlabel="Baseline Value", ylabel="Count", 
+                      title="Baseline Value Distribution", legend=false)
+        p4 = histogram(df[!,"accelerations"], 
+                      xlabel="Accelerations", ylabel="Count", 
+                      title="Accelerations Distribution", legend=false)
+       
+        plot(p1, p2, p3, p4, layout=(2, 2), size=(1000, 800))
+    end
