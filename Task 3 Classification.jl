@@ -31,4 +31,13 @@ df = CSV.read(data_path, DataFrame)
         println("\nTarget variable distribution:")
         println(target_dist)
         
-
+        # Visualization
+        p1 = bar(target_dist.fetal_health, target_dist.count, 
+                xlabel="Fetal Health", ylabel="Count", 
+                title="Target Distribution", legend=false)
+        
+        correlation_matrix = cor(Matrix(df[:, Not(:fetal_health)]))
+        p2 = heatmap(names(df[:, Not(:fetal_health)]), 
+                    names(df[:, Not(:fetal_health)]), 
+                    correlation_matrix, 
+                    title="Feature Correlation", color=:viridis)
